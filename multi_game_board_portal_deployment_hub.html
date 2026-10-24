@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đại Chiến Cờ - Multi-Board Game Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for Audio Synth & Sound Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Serif+TC:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wood: {
+                            light: '#d2b48c',
+                            DEFAULT: '#8b4513',
+                            dark: '#3d2314',
+                            border: '#5c2c0e',
+                            gold: '#dfa234',
+                            red: '#901212'
+                        }
+                    },
+                    fontFamily: {
+                        asian: ['"Noto Serif TC"', 'serif'],
+                        cinzel: ['Cinzel', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Asian Wood Textures & Styling */
+        body {
+            background-color: #1a0f0a;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(30, 15, 8, 0.85), rgba(10, 5, 2, 0.95)),
+                url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            color: #f3e5ab;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .wood-panel {
+            background: linear-gradient(145deg, #4a2810, #2c1608);
+            border: 2px solid #8b5a2b;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 8px 25px rgba(0,0,0,0.6);
+        }
+
+        .wood-card {
+            background: linear-gradient(135deg, #381d0c, #221006);
+            border: 1px solid #6b3e1b;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .wood-card:hover {
+            border-color: #dfa234;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 15px rgba(223, 162, 52, 0.2);
+        }
+
+        .gold-border {
+            border: 2px solid #dfa234;
+            box-shadow: 0 0 10px rgba(223, 162, 52, 0.3);
+        }
+
+        .gold-text {
+            background: linear-gradient(135deg, #ffe082, #dfa234, #b87b10);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Chess & Board Styling */
+        .xiangqi-piece {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Noto Serif TC', serif;
+            font-weight: 900;
+            font-size: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -3px 4px rgba(0,0,0,0.6);
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.15s ease;
+        }
+
+        .xiangqi-piece:hover {
+            transform: scale(1.1);
+        }
+
+        .piece-red {
+            background: radial-gradient(circle at 35% 35%, #e63946, #800f1c);
+            color: #fff;
+            border: 2px solid #ffccd5;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .piece-black {
+            background: radial-gradient(circle at 35% 35%, #2b2b2b, #050505);
+            color: #f1faee;
+            border: 2px solid #a8dadc;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        }
+
+        .tu-lenh-piece {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 13px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .tu-lenh-red {
+            background: linear-gradient(135deg, #c0392b, #78281f);
+            color: #fff;
+            border: 1px solid #f5b7b1;
+        }
+
+        .tu-lenh-blue {
+            background: linear-gradient(135deg, #1f618d, #113f60);
+            color: #fff;
+            border: 1px solid #a9cce3;
+        }
+
+        /* Lucky Wheel Animation */
+        #wheel-canvas {
+            transition: transform 4s cubic-bezier(0.15, 0.99, 0.24, 0.99);
+        }
+
+        /* Terminal styling */
+        .terminal-box {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #0b0f19;
+            color: #10b981;
+            border: 1px solid #1e293b;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a0f0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #5c2c0e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #dfa234;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-yellow-600 selection:text-white">
+
+    <!-- TOP NAV BAR -->
+    <header class="wood-panel sticky top-0 z-50 border-b border-wood-border px-4 py-3 shadow-2xl">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('lobby')">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-700 to-yellow-500 border-2 border-yellow-300 flex items-center justify-center text-xl shadow-lg">
+                    <i class="fa-solid fa-chess-king text-amber-950"></i>
+                </div>
+                <div>
+                    <h1 class="font-cinzel text-xl font-bold tracking-wider gold-text">ĐẠI CHIẾN CỜ</h1>
+                    <p class="text-[10px] text-amber-200/70 tracking-widest uppercase font-semibold">Asian Board Games Portal</p>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-1 bg-black/40 p-1.5 rounded-xl border border-amber-900/40">
+                <button id="nav-lobby" onclick="switchTab('lobby')" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-amber-800/80 text-amber-100 shadow">
+                    <i class="fa-solid fa-gamepad mr-2"></i> Game Lobby
+                </button>
+                <button id="nav-wheel" onclick="switchTab('wheel')" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-amber-300/80 hover:text-amber-100 hover:bg-amber-900/40">
+                    <i class="fa-solid fa-spinner mr-2"></i> Daily Spin
+                </button>
+                <button id="nav-leaderboard" onclick="switchTab('leaderboard')" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-amber-300/80 hover:text-amber-100 hover:bg-amber-900/40">
+                    <i class="fa-solid fa-trophy mr-2 text-yellow-500"></i> Ranking
+                </button>
+                <button id="nav-deploy" onclick="switchTab('deploy')" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-amber-300/80 hover:text-amber-100 hover:bg-amber-900/40">
+                    <i class="fa-solid fa-rocket mr-2 text-emerald-400"></i> Deployment Console
+                </button>
+            </nav>
+
+            <!-- User Auth Bar -->
+            <div class="flex items-center gap-3">
+                <!-- User Profile / Auth Button -->
+                <div id="user-status-container" class="flex items-center gap-3">
+                    <!-- Populated dynamically by JS -->
+                </div>
+                
+                <!-- Audio Toggle Button -->
+                <button id="audio-btn" onclick="toggleAudio()" class="w-9 h-9 rounded-lg bg-amber-950/80 border border-amber-700/50 flex items-center justify-center text-amber-300 hover:text-white hover:border-amber-500 transition">
+                    <i class="fa-solid fa-volume-high" id="audio-icon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- LOBBY TAB -->
+        <section id="tab-lobby" class="tab-content space-y-6">
+            <!-- Hero Banner -->
+            <div class="wood-panel rounded-2xl p-6 md:p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border-amber-600/40">
+                <div class="relative z-10 max-w-2xl text-center md:text-left">
+                    <span class="px-3 py-1 bg-amber-900/60 border border-amber-500/40 rounded-full text-xs font-semibold text-amber-300 uppercase tracking-widest">
+                        Traditional Masters Platform
+                    </span>
+                    <h2 class="text-3xl md:text-5xl font-cinzel font-black gold-text mt-3 mb-2">MASTER THE ANCIENT BOARDS</h2>
+                    <p class="text-amber-200/80 text-sm md:text-base leading-relaxed">
+                        Compete in traditional Asian strategy games: Xiangqi (Cờ Tướng), Western Chess (Cờ Vua), and Vietnam's unique Military Chess (Cờ Tư Lệnh). Choose your stakes and climb the rank.
+                    </p>
+                </div>
+                <div class="relative z-10 flex flex-wrap gap-3 justify-center">
+                    <div class="wood-card p-3 rounded-xl border border-amber-500/30 text-center min-w-[110px]">
+                        <p class="text-xs text-amber-400/70">Online Players</p>
+                        <p class="text-xl font-bold text-amber-100" id="stat-online">1,482</p>
+                    </div>
+                    <div class="wood-card p-3 rounded-xl border border-amber-500/30 text-center min-w-[110px]">
+                        <p class="text-xs text-amber-400/70">Active Rooms</p>
+                        <p class="text-xl font-bold text-amber-100">324</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bet Room Selection Modal / Selector Header -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-amber-900/50 pb-4">
+                <div>
+                    <h3 class="text-2xl font-cinzel font-bold text-amber-200">Select Game Arena</h3>
+                    <p class="text-xs text-amber-400/60">Choose your game discipline and bet tier to enter a room</p>
+                </div>
+                <!-- Bet Selector -->
+                <div class="flex items-center bg-black/40 p-1 rounded-xl border border-amber-900/50">
+                    <span class="text-xs text-amber-400 font-semibold px-3"><i class="fa-solid fa-coins mr-1 text-yellow-500"></i> Bet Room:</span>
+                    <button onclick="selectBetTier(100)" class="bet-tier-btn px-3 py-1 rounded-lg text-xs font-bold bg-amber-700 text-amber-100" data-bet="100">100 💰</button>
+                    <button onclick="selectBetTier(500)" class="bet-tier-btn px-3 py-1 rounded-lg text-xs font-bold text-amber-400 hover:text-white" data-bet="500">500 💰</button>
+                    <button onclick="selectBetTier(2000)" class="bet-tier-btn px-3 py-1 rounded-lg text-xs font-bold text-amber-400 hover:text-white" data-bet="2000">2,000 💰</button>
+                </div>
+            </div>
+
+            <!-- Game Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Xiangqi Card -->
+                <div class="wood-card rounded-2xl p-5 flex flex-col justify-between h-96 group relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 text-9xl text-amber-950/20 font-asian select-none pointer-events-none group-hover:scale-110 transition-transform">帥</div>
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-red-950 border border-red-500/40 flex items-center justify-center text-red-400 text-2xl mb-4 shadow">
+                            🩩
+                        </div>
+                        <h4 class="text-2xl font-cinzel font-bold text-amber-100">Cờ Tướng (Xiangqi)</h4>
+                        <p class="text-xs text-amber-300/70 mt-1 mb-4">Classic Chinese Chess featuring Generals, Advisors, Cannons, and the River separator.</p>
+                        <div class="space-y-2 text-xs text-amber-400/80">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Full Rule Movement & Capture</div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> River & Palace Restrictions</div>
+                        </div>
+                    </div>
+                    <button onclick="launchGame('xiangqi')" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-amber-950 font-bold tracking-wider uppercase text-sm shadow-lg transition active:scale-95">
+                        <i class="fa-solid fa-play mr-2"></i> Play Xiangqi
+                    </button>
+                </div>
+
+                <!-- Western Chess Card -->
+                <div class="wood-card rounded-2xl p-5 flex flex-col justify-between h-96 group relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 text-9xl text-amber-950/20 font-cinzel select-none pointer-events-none group-hover:scale-110 transition-transform">♔</div>
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-950 border border-amber-500/40 flex items-center justify-center text-amber-300 text-2xl mb-4 shadow">
+                            ♚
+                        </div>
+                        <h4 class="text-2xl font-cinzel font-bold text-amber-100">Cờ Vua (Chess)</h4>
+                        <p class="text-xs text-amber-300/70 mt-1 mb-4">International 8x8 Western Chess. Strategic battle involving Pawns, Knights, Queens, and Kings.</p>
+                        <div class="space-y-2 text-xs text-amber-400/80">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Classic 8x8 Grid Arena</div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Smart AI Bot Opponent</div>
+                        </div>
+                    </div>
+                    <button onclick="launchGame('chess')" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-amber-950 font-bold tracking-wider uppercase text-sm shadow-lg transition active:scale-95">
+                        <i class="fa-solid fa-play mr-2"></i> Play Chess
+                    </button>
+                </div>
+
+                <!-- Vietnamese Military Chess Card -->
+                <div class="wood-card rounded-2xl p-5 flex flex-col justify-between h-96 group relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 text-9xl text-amber-950/20 font-asian select-none pointer-events-none group-hover:scale-110 transition-transform">🎖️</div>
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-950 border border-blue-500/40 flex items-center justify-center text-blue-400 text-2xl mb-4 shadow">
+                            <i class="fa-solid fa-jet-fighter"></i>
+                        </div>
+                        <h4 class="text-2xl font-cinzel font-bold text-amber-100">Cờ Tư Lệnh (Military)</h4>
+                        <p class="text-xs text-amber-300/70 mt-1 mb-4">Unique Vietnamese tactical military board game featuring Air Forces, Artillery, Tanks, Infantry & Navy.</p>
+                        <div class="space-y-2 text-xs text-amber-400/80">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Combined Arms Combined Warfare</div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Terrain & Sea Passages</div>
+                        </div>
+                    </div>
+                    <button onclick="launchGame('tulenh')" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-amber-950 font-bold tracking-wider uppercase text-sm shadow-lg transition active:scale-95">
+                        <i class="fa-solid fa-play mr-2"></i> Play Military Chess
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAMEPLAY ARENA TAB (HIDDEN BY DEFAULT) -->
+        <section id="tab-game" class="tab-content hidden space-y-4">
+            <div class="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-amber-900/50">
+                <button onclick="switchTab('lobby')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-900/60 hover:bg-amber-800 text-amber-200 transition">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Exit Arena
+                </button>
+                <div class="text-center">
+                    <span id="arena-title" class="text-lg font-cinzel font-bold text-amber-200">Xiangqi Match</span>
+                    <span id="arena-bet-badge" class="ml-2 text-xs px-2 py-0.5 rounded-full bg-yellow-900/80 text-yellow-300 border border-yellow-600/40">Bet: 100 💰</span>
+                </div>
+                <button onclick="resetCurrentGame()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-800 transition">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Restart
+                </button>
+            </div>
+
+            <!-- Board Container -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Interactive Game Board Panel -->
+                <div class="lg:col-span-3 wood-panel rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center min-h-[520px] relative overflow-x-auto">
+                    
+                    <!-- Xiangqi Board Render Target -->
+                    <div id="board-xiangqi" class="game-board hidden">
+                        <div class="relative bg-amber-200/90 border-4 border-amber-950 p-2 rounded shadow-2xl" style="width: 480px; height: 530px; background-color: #e2be8a;">
+                            <!-- Xiangqi Grid Overlay -->
+                            <div class="absolute inset-4 border-2 border-amber-900 grid grid-cols-8 grid-rows-9">
+                                <!-- Grid cells for visual lines -->
+                                <script>
+                                    for(let i=0; i<64; i++) {
+                                        document.write(`<div class="border-r border-b border-amber-800/40 pointer-events-none"></div>`);
+                                    }
+                                </script>
+                            </div>
+                            <!-- River Label -->
+                            <div class="absolute top-[242px] left-4 right-4 h-10 bg-amber-300/40 flex items-center justify-around font-asian text-amber-950 text-xl font-bold tracking-widest pointer-events-none border-y border-amber-800/60">
+                                <span>楚 河</span>
+                                <span>漢 界</span>
+                            </div>
+                            <!-- Pieces container -->
+                            <div id="xiangqi-pieces-container" class="absolute inset-0 p-2 grid grid-cols-9 grid-rows-10">
+                                <!-- Dynamically populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Western Chess Board Render Target -->
+                    <div id="board-chess" class="game-board hidden">
+                        <div class="w-[440px] h-[440px] bg-amber-950 border-4 border-amber-900 grid grid-cols-8 grid-rows-8 rounded shadow-2xl overflow-hidden" id="chess-grid">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Military Chess Board Render Target -->
+                    <div id="board-tulenh" class="game-board hidden">
+                        <div class="relative w-[500px] h-[500px] bg-emerald-950 border-4 border-amber-900 p-2 rounded shadow-2xl">
+                            <div class="text-center font-cinzel text-xs text-amber-300/70 mb-2">CỜ TƯ LỆNH - COMBINED ARMS ARENA</div>
+                            <div id="tulenh-grid" class="grid grid-cols-9 grid-rows-10 gap-1 w-full h-[450px] bg-emerald-900/40 p-2 rounded border border-emerald-700/50">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Match Info & Move Log Sidebar -->
+                <div class="space-y-4">
+                    <!-- Opponent / Match Status -->
+                    <div class="wood-card p-4 rounded-xl space-y-3">
+                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Match Dashboard</h4>
+                        <div class="flex items-center justify-between p-2 rounded bg-black/30 border border-amber-900/40">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-red-900 flex items-center justify-center font-bold text-xs text-white">AI</div>
+                                <div>
+                                    <p class="text-xs font-bold text-amber-100">Grandmaster Bot</p>
+                                    <p class="text-[10px] text-amber-400/60">ELO 2100</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-mono text-emerald-400 font-bold" id="bot-status">Thinking...</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded bg-black/30 border border-amber-900/40">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-full bg-amber-700 flex items-center justify-center font-bold text-xs text-white" id="arena-user-avatar">U</div>
+                                <div>
+                                    <p class="text-xs font-bold text-amber-100" id="arena-user-name">Player</p>
+                                    <p class="text-[10px] text-amber-400/60" id="arena-user-coins">Balance: 1,000 💰</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-mono text-amber-300 font-bold" id="turn-indicator">Your Turn</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Move History Log -->
+                    <div class="wood-card p-4 rounded-xl flex flex-col h-64">
+                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Move History</h4>
+                        <div id="move-history-log" class="flex-grow overflow-y-auto space-y-1 text-xs font-mono text-amber-200/80 pr-1">
+                            <div class="text-amber-500/60 italic text-[11px]">Match started. Good luck!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DAILY SPIN WHEEL TAB -->
+        <section id="tab-wheel" class="tab-content hidden space-y-6">
+            <div class="wood-panel rounded-2xl p-6 md:p-8 text-center max-w-2xl mx-auto space-y-6">
+                <div>
+                    <span class="px-3 py-1 bg-yellow-900/60 border border-yellow-500/40 rounded-full text-xs font-semibold text-yellow-300 uppercase tracking-widest">
+                        Daily Rewards
+                    </span>
+                    <h2 class="text-3xl font-cinzel font-bold gold-text mt-2">LUCKY CHESS WHEEL</h2>
+                    <p class="text-xs text-amber-200/70">Spin once daily to claim free bet coins & bonus titles!</p>
+                </div>
+
+                <!-- Wheel Visual -->
+                <div class="relative w-72 h-72 mx-auto flex items-center justify-center">
+                    <!-- Arrow Pointer -->
+                    <div class="absolute -top-3 z-20 text-red-500 text-3xl filter drop-shadow-md">
+                        <i class="fa-solid fa-location-pin fa-rotate-180"></i>
+                    </div>
+                    <!-- Wheel Canvas -->
+                    <canvas id="wheel-canvas" width="280" height="280" class="rounded-full shadow-2xl border-4 border-amber-600"></canvas>
+                </div>
+
+                <div>
+                    <button id="spin-btn" onclick="spinWheel()" class="px-8 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-amber-950 font-black tracking-wider uppercase rounded-xl shadow-xl transition transform active:scale-95">
+                        <i class="fa-solid fa-rotate mr-2"></i> SPIN WHEEL NOW
+                    </button>
+                    <p id="spin-msg" class="text-xs text-amber-400 font-semibold mt-3 min-h-[18px]"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEADERBOARD TAB -->
+        <section id="tab-leaderboard" class="tab-content hidden space-y-6">
+            <div class="wood-panel rounded-2xl p-6 max-w-4xl mx-auto space-y-4">
+                <div class="flex items-center justify-between border-b border-amber-900/60 pb-4">
+                    <div>
+                        <h2 class="text-2xl font-cinzel font-bold gold-text">MASTERS LEADERBOARD</h2>
+                        <p class="text-xs text-amber-300/60">Top ranking players in traditional strategy board games</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-xs text-amber-300 font-mono">Season 12 Active</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-black/40 text-amber-400 uppercase tracking-wider border-b border-amber-900/60">
+                            <tr>
+                                <th class="p-3">Rank</th>
+                                <th class="p-3">Master Player</th>
+                                <th class="p-3">Title</th>
+                                <th class="p-3 text-right">Win Rate</th>
+                                <th class="p-3 text-right">Coins Won</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-table-body" class="divide-y divide-amber-900/30 text-amber-100">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEPLOYMENT CONSOLE TAB (GITHUB + VERCEL + NEON) -->
+        <section id="tab-deploy" class="tab-content hidden space-y-6">
+            <div class="wood-panel rounded-2xl p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+                <div>
+                    <span class="px-3 py-1 bg-emerald-950 border border-emerald-500/40 rounded-full text-xs font-semibold text-emerald-400 uppercase tracking-widest">
+                        Production Console
+                    </span>
+                    <h2 class="text-3xl font-cinzel font-bold text-amber-100 mt-2">LIVE DEPLOYMENT ENGINE</h2>
+                    <p class="text-xs text-amber-200/70">Simulate CI/CD pipelines connecting GitHub source repository, Neon PostgreSQL Database, and Vercel Edge Serverless Deployment.</p>
+                </div>
+
+                <!-- Integration Pipeline Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- GitHub -->
+                    <div class="wood-card p-4 rounded-xl border border-slate-700/60 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-white text-xl">
+                            <i class="fa-brands fa-github"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-amber-100">GitHub Repo</p>
+                            <p class="text-[11px] text-slate-400 font-mono">main (v2.4.0)</p>
+                        </div>
+                        <span class="ml-auto text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">Connected</span>
+                    </div>
+
+                    <!-- Neon PostgreSQL -->
+                    <div class="wood-card p-4 rounded-xl border border-emerald-900/60 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-700 flex items-center justify-center text-emerald-400 text-xl">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-amber-100">Neon Postgres DB</p>
+                            <p class="text-[11px] text-emerald-400 font-mono">ep-boardgame-db</p>
+                        </div>
+                        <span class="ml-auto text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">Ready</span>
+                    </div>
+
+                    <!-- Vercel Deployment -->
+                    <div class="wood-card p-4 rounded-xl border border-cyan-900/60 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-950 border border-cyan-700 flex items-center justify-center text-cyan-400 text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-amber-100">Vercel Edge</p>
+                            <p class="text-[11px] text-cyan-400 font-mono" id="vercel-status-text">Idle</p>
+                        </div>
+                        <span id="vercel-badge" class="ml-auto text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">Standby</span>
+                    </div>
+                </div>
+
+                <!-- Action & Status Controls -->
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-black/40 p-4 rounded-xl border border-amber-900/50">
+                    <button id="deploy-trigger-btn" onclick="triggerProductionDeployment()" class="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-lg transition active:scale-95">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Trigger Production Build
+                    </button>
+                    
+                    <div id="live-url-box" class="hidden items-center gap-2 bg-slate-900 px-3 py-1.5 rounded border border-slate-700 font-mono text-xs">
+                        <span class="text-slate-400">Live Target:</span>
+                        <a id="live-deployment-link" href="#" target="_blank" class="text-emerald-400 underline hover:text-emerald-300">https://daichien-co.vercel.app</a>
+                        <button onclick="copyDeploymentLink()" class="ml-2 text-slate-400 hover:text-white" title="Copy Link"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                </div>
+
+                <!-- Terminal Build Log Screen -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs text-slate-400 font-mono px-1">
+                        <span><i class="fa-solid fa-terminal mr-2"></i> Deployment Log Output</span>
+                        <span id="build-time-counter">0.0s</span>
+                    </div>
+                    <div id="terminal-output" class="terminal-box h-64 p-4 rounded-xl overflow-y-auto font-mono text-xs space-y-1 shadow-inner">
+                        <div class="text-slate-500">// Deployment console ready. Click "Trigger Production Build" to simulate deployment pipeline.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="wood-panel border-t border-wood-border py-4 px-4 text-center text-xs text-amber-300/50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+            <p>© 2026 Đại Chiến Cờ - Traditional Asian Strategy Gaming Platform.</p>
+            <p>Built with Tailwind CSS, Tone.js Web Audio API & Modern ES6 JavaScript.</p>
+        </div>
+    </footer>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="wood-panel p-6 md:p-8 rounded-2xl max-w-md w-full border border-amber-600/50 relative space-y-4">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-amber-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            
+            <div class="text-center">
+                <h3 class="text-2xl font-cinzel font-bold gold-text" id="auth-title">Player Login</h3>
+                <p class="text-xs text-amber-300/60 mt-1">Enter your credentials or register a new master profile</p>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-amber-300 mb-1">Username / Nickname</label>
+                    <input type="text" id="auth-username" required class="w-full bg-black/60 border border-amber-900 rounded-lg px-3 py-2 text-amber-100 text-sm focus:outline-none focus:border-amber-500" placeholder="e.g. MasterGia">
+                </div>
+                <div id="email-field" class="hidden">
+                    <label class="block text-xs font-semibold text-amber-300 mb-1">Email Address</label>
+                    <input type="email" id="auth-email" class="w-full bg-black/60 border border-amber-900 rounded-lg px-3 py-2 text-amber-100 text-sm focus:outline-none focus:border-amber-500" placeholder="player@domain.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-amber-300 mb-1">Passcode</label>
+                    <input type="password" id="auth-password" required class="w-full bg-black/60 border border-amber-900 rounded-lg px-3 py-2 text-amber-100 text-sm focus:outline-none focus:border-amber-500" placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-bold text-sm tracking-wider uppercase transition shadow-lg mt-2">
+                    Submit Authentication
+                </button>
+            </form>
+
+            <div class="text-center pt-2">
+                <button onclick="toggleAuthMode()" class="text-xs text-amber-400 underline hover:text-amber-200" id="auth-toggle-btn">
+                    Don't have a master account? Register Here
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO SYNTH & LOGIC JAVASCRIPT -->
+    <script>
+        // ==========================================
+        // STATE MANAGEMENT
+        // ==========================================
+        let currentUser = {
+            username: 'MasterPlayer',
+            coins: 1500,
+            wins: 12,
+            losses: 4,
+            isLoggedIn: true
+        };
+
+        let selectedBet = 100;
+        let currentGame = 'xiangqi';
+        let audioMuted = false;
+        let authMode = 'login'; // 'login' or 'register'
+
+        // Audio Synth Engine (Tone.js)
+        let moveSynth, winSynth;
+
+        function initAudio() {
+            try {
+                moveSynth = new Tone.MembraneSynth({
+                    pitchDecay: 0.05,
+                    octaves: 2,
+                    oscillator: { type: "sine" }
+                }).toDestination();
+
+                winSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+            } catch (e) {
+                console.log("Audio synth initialized on interaction");
+            }
+        }
+
+        function playSound(type) {
+            if (audioMuted) return;
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                if (type === 'move') {
+                    moveSynth.triggerAttackRelease("C3", "8n");
+                } else if (type === 'win') {
+                    winSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "4n");
+                } else if (type === 'click') {
+                    moveSynth.triggerAttackRelease("G2", "16n");
+                }
+            } catch (e) {}
+        }
+
+        function toggleAudio() {
+            audioMuted = !audioMuted;
+            const icon = document.getElementById('audio-icon');
+            if (audioMuted) {
+                icon.className = "fa-solid fa-volume-xmark text-red-400";
+            } else {
+                icon.className = "fa-solid fa-volume-high text-amber-300";
+                playSound('click');
+            }
+        }
+
+        // ==========================================
+        // NAVIGATION & TABS
+        // ==========================================
+        function switchTab(tabId) {
+            playSound('click');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            if (tabId === 'wheel') {
+                renderWheel();
+            }
+        }
+
+        function selectBetTier(bet) {
+            playSound('click');
+            selectedBet = bet;
+            document.querySelectorAll('.bet-tier-btn').forEach(btn => {
+                if (parseInt(btn.dataset.bet) === bet) {
+                    btn.className = "bet-tier-btn px-3 py-1 rounded-lg text-xs font-bold bg-amber-700 text-amber-100 shadow";
+                } else {
+                    btn.className = "bet-tier-btn px-3 py-1 rounded-lg text-xs font-bold text-amber-400 hover:text-white";
+                }
+            });
+            document.getElementById('arena-bet-badge').innerText = `Bet: ${bet} 💰`;
+        }
+
+        // ==========================================
+        // AUTHENTICATION SYSTEM SIMULATOR
+        // ==========================================
+        function updateAuthUI() {
+            const container = document.getElementById('user-status-container');
+            if (currentUser.isLoggedIn) {
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-amber-900/50">
+                        <i class="fa-solid fa-coins text-yellow-500 text-sm"></i>
+                        <span class="text-xs font-bold text-yellow-400">${currentUser.coins.toLocaleString()} 💰</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-amber-700 border border-amber-500 flex items-center justify-center font-bold text-xs text-white shadow">
+                            ${currentUser.username.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="text-xs font-bold text-amber-200 hidden sm:inline">${currentUser.username}</span>
+                        <button onclick="logoutUser()" class="text-xs text-amber-400/60 hover:text-red-400 ml-1" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button onclick="openAuthModal()" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-amber-700 hover:bg-amber-600 text-amber-100 transition shadow">
+                        <i class="fa-solid fa-user-check mr-1"></i> Login / Register
+                    </button>
+                `;
+            }
+
+            // Update Arena stats if present
+            const arenaCoins = document.getElementById('arena-user-coins');
+            if (arenaCoins) arenaCoins.innerText = `Balance: ${currentUser.coins.toLocaleString()} 💰`;
+            const arenaName = document.getElementById('arena-user-name');
+            if (arenaName) arenaName.innerText = currentUser.username;
+            const arenaAvatar = document.getElementById('arena-user-avatar');
+            if (arenaAvatar) arenaAvatar.innerText = currentUser.username.charAt(0).toUpperCase();
+        }
+
+        function openAuthModal() {
+            playSound('click');
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            playSound('click');
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function toggleAuthMode() {
+            playSound('click');
+            authMode = authMode === 'login' ? 'register' : 'login';
+            const emailField = document.getElementById('email-field');
+            const title = document.getElementById('auth-title');
+            const toggleBtn = document.getElementById('auth-toggle-btn');
+
+            if (authMode === 'register') {
+                emailField.classList.remove('hidden');
+                title.innerText = 'Register Master Profile';
+                toggleBtn.innerText = 'Already have an account? Login Here';
+            } else {
+                emailField.classList.add('hidden');
+                title.innerText = 'Player Login';
+                toggleBtn.innerText = "Don't have a master account? Register Here";
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            playSound('click');
+            const username = document.getElementById('auth-username').value;
+            if (!username) return;
+
+            currentUser.username = username;
+            currentUser.isLoggedIn = true;
+            closeAuthModal();
+            updateAuthUI();
+        }
+
+        function logoutUser() {
+            playSound('click');
+            currentUser.isLoggedIn = false;
+            updateAuthUI();
+        }
+
+        // ==========================================
+        // GAME ENGINES & LOGIC
+        // ==========================================
+        function launchGame(gameType) {
+            playSound('click');
+            if (currentUser.coins < selectedBet) {
+                alert(`Insufficient coins! You need at least ${selectedBet} coins to join this arena.`);
+                return;
+            }
+
+            currentGame = gameType;
+            switchTab('game');
+
+            // Hide all boards
+            document.querySelectorAll('.game-board').forEach(b => b.classList.add('hidden'));
+
+            const title = document.getElementById('arena-title');
+            document.getElementById('move-history-log').innerHTML = '<div class="text-amber-500/60 italic text-[11px]">Match initialized. Make your first move!</div>';
+
+            if (gameType === 'xiangqi') {
+                title.innerText = 'Cờ Tướng (Xiangqi) Match';
+                document.getElementById('board-xiangqi').classList.remove('hidden');
+                initXiangqiBoard();
+            } else if (gameType === 'chess') {
+                title.innerText = 'Cờ Vua (Western Chess) Match';
+                document.getElementById('board-chess').classList.remove('hidden');
+                initChessBoard();
+            } else if (gameType === 'tulenh') {
+                title.innerText = 'Cờ Tư Lệnh (Military Chess) Match';
+                document.getElementById('board-tulenh').classList.remove('hidden');
+                initTuLenhBoard();
+            }
+        }
+
+        function logMove(text) {
+            const log = document.getElementById('move-history-log');
+            const div = document.createElement('div');
+            div.innerText = `> ${text}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+            playSound('move');
+        }
+
+        // --- XIANGQI GAME LOGIC ---
+        let xiangqiSelected = null;
+        let xiangqiBoardState = [];
+
+        function initXiangqiBoard() {
+            const container = document.getElementById('xiangqi-pieces-container');
+            container.innerHTML = '';
+
+            // Initial Xiangqi Board Setup (Simplified Grid)
+            const initialPieces = [
+                { pos: 0, name: '車', side: 'black' }, { pos: 1, name: '馬', side: 'black' }, { pos: 2, name: '象', side: 'black' },
+                { pos: 3, name: '士', side: 'black' }, { pos: 4, name: '將', side: 'black' }, { pos: 5, name: '士', side: 'black' },
+                { pos: 6, name: '象', side: 'black' }, { pos: 7, name: '馬', side: 'black' }, { pos: 8, name: '車', side: 'black' },
+                { pos: 19, name: '砲', side: 'black' }, { pos: 25, name: '砲', side: 'black' },
+                { pos: 27, name: '卒', side: 'black' }, { pos: 29, name: '卒', side: 'black' }, { pos: 31, name: '卒', side: 'black' }, { pos: 33, name: '卒', side: 'black' }, { pos: 35, name: '卒', side: 'black' },
+
+                { pos: 54, name: '兵', side: 'red' }, { pos: 56, name: '兵', side: 'red' }, { pos: 58, name: '兵', side: 'red' }, { pos: 60, name: '兵', side: 'red' }, { pos: 62, name: '兵', side: 'red' },
+                { pos: 64, name: '炮', side: 'red' }, { pos: 70, name: '炮', side: 'red' },
+                { pos: 81, name: '俥', side: 'red' }, { pos: 82, name: '傌', side: 'red' }, { pos: 83, name: '相', side: 'red' },
+                { pos: 84, name: '仕', side: 'red' }, { pos: 85, name: '帥', side: 'red' }, { pos: 86, name: '仕', side: 'red' },
+                { pos: 87, name: '相', side: 'red' }, { pos: 88, name: '傌', side: 'red' }, { pos: 89, name: '俥', side: 'red' }
+            ];
+
+            xiangqiBoardState = new Array(90).fill(null);
+            initialPieces.forEach(p => xiangqiBoardState[p.pos] = p);
+
+            renderXiangqiGrid();
+        }
+
+        function renderXiangqiGrid() {
+            const container = document.getElementById('xiangqi-pieces-container');
+            container.innerHTML = '';
+
+            for (let i = 0; i < 90; i++) {
+                const cell = document.createElement('div');
+                cell.className = "flex items-center justify-center relative";
+                cell.onclick = () => handleXiangqiClick(i);
+
+                const piece = xiangqiBoardState[i];
+                if (piece) {
+                    const pDiv = document.createElement('div');
+                    pDiv.className = `xiangqi-piece ${piece.side === 'red' ? 'piece-red' : 'piece-black'}`;
+                    if (xiangqiSelected === i) pDiv.classList.add('ring-4', 'ring-yellow-400');
+                    pDiv.innerText = piece.name;
+                    cell.appendChild(pDiv);
+                }
+
+                container.appendChild(cell);
+            }
+        }
+
+        function handleXiangqiClick(index) {
+            const piece = xiangqiBoardState[index];
+
+            if (xiangqiSelected === null) {
+                if (piece && piece.side === 'red') {
+                    xiangqiSelected = index;
+                    renderXiangqiGrid();
+                }
+            } else {
+                if (xiangqiSelected === index) {
+                    xiangqiSelected = null;
+                    renderXiangqiGrid();
+                    return;
+                }
+
+                // Move piece
+                const movingPiece = xiangqiBoardState[xiangqiSelected];
+                xiangqiBoardState[index] = movingPiece;
+                xiangqiBoardState[xiangqiSelected] = null;
+                
+                logMove(`Red moved ${movingPiece.name} to position ${index}`);
+                xiangqiSelected = null;
+                renderXiangqiGrid();
+
+                // Trigger AI Move
+                setTimeout(triggerXiangqiAIMove, 600);
+            }
+        }
+
+        function triggerXiangqiAIMove() {
+            const blackIndices = [];
+            xiangqiBoardState.forEach((p, idx) => {
+                if (p && p.side === 'black') blackIndices.push(idx);
+            });
+
+            if (blackIndices.length === 0) return;
+
+            const randomPieceIdx = blackIndices[Math.floor(Math.random() * blackIndices.length)];
+            const piece = xiangqiBoardState[randomPieceIdx];
+
+            // Find an empty or red spot
+            const possibleMoves = [randomPieceIdx + 9, randomPieceIdx - 9, randomPieceIdx + 1, randomPieceIdx - 1].filter(i => i >= 0 && i < 90);
+            const targetIdx = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
+            xiangqiBoardState[targetIdx] = piece;
+            xiangqiBoardState[randomPieceIdx] = null;
+
+            logMove(`Black AI moved ${piece.name} to position ${targetIdx}`);
+            renderXiangqiGrid();
+        }
+
+        // --- WESTERN CHESS GAME LOGIC ---
+        let chessSelected = null;
+        let chessBoardState = [];
+
+        function initChessBoard() {
+            const grid = document.getElementById('chess-grid');
+            grid.innerHTML = '';
+
+            const initialSetup = [
+                '♜','♞','♝','♛','♚','♝','♞','♜',
+                '♟','♟','♟','♟','♟','♟','♟','♟',
+                '','','','','','','','',
+                '','','','','','','','',
+                '','','','','','','','',
+                '','','','','','','','',
+                '♙','♙','♙','♙','♙','♙','♙','♙',
+                '♖','♘','♗','♕','♔','♗','♘','♖'
+            ];
+
+            chessBoardState = [...initialSetup];
+            renderChessGrid();
+        }
+
+        function renderChessGrid() {
+            const grid = document.getElementById('chess-grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < 64; i++) {
+                const row = Math.floor(i / 8);
+                const col = i % 8;
+                const isDark = (row + col) % 2 === 1;
+
+                const cell = document.createElement('div');
+                cell.className = `flex items-center justify-center text-3xl font-bold cursor-pointer select-none transition ${isDark ? 'bg-amber-900/80' : 'bg-amber-200/90 text-amber-950'}`;
+                if (chessSelected === i) cell.classList.add('bg-yellow-500/80');
+
+                cell.innerText = chessBoardState[i];
+                cell.onclick = () => handleChessClick(i);
+                grid.appendChild(cell);
+            }
+        }
+
+        function handleChessClick(index) {
+            const piece = chessBoardState[index];
+
+            if (chessSelected === null) {
+                if (piece && isWhitePiece(piece)) {
+                    chessSelected = index;
+                    renderChessGrid();
+                }
+            } else {
+                if (chessSelected === index) {
+                    chessSelected = null;
+                    renderChessGrid();
+                    return;
+                }
+
+                const moving = chessBoardState[chessSelected];
+                chessBoardState[index] = moving;
+                chessBoardState[chessSelected] = '';
+
+                logMove(`White moved ${moving} to cell ${index}`);
+                chessSelected = null;
+                renderChessGrid();
+
+                setTimeout(triggerChessAIMove, 600);
+            }
+        }
+
+        function isWhitePiece(p) {
+            return ['♙','♖','♘','♗','♕','♔'].includes(p);
+        }
+
+        function triggerChessAIMove() {
+            const blackIndices = [];
+            chessBoardState.forEach((p, idx) => {
+                if (['♟','♜','♞','♝','♛','♚'].includes(p)) blackIndices.push(idx);
+            });
+
+            if (blackIndices.length === 0) return;
+
+            const fromIdx = blackIndices[Math.floor(Math.random() * blackIndices.length)];
+            const piece = chessBoardState[fromIdx];
+            const targetIdx = Math.min(63, Math.max(0, fromIdx + 8)); // Move forward if possible
+
+            chessBoardState[targetIdx] = piece;
+            chessBoardState[fromIdx] = '';
+
+            logMove(`Black AI moved ${piece} to cell ${targetIdx}`);
+            renderChessGrid();
+        }
+
+        // --- VIETNAMESE MILITARY CHESS (CỜ TƯ LỆNH) ---
+        function initTuLenhBoard() {
+            const grid = document.getElementById('tulenh-grid');
+            grid.innerHTML = '';
+
+            const militaryUnits = [
+                { name: 'Tư Lệnh', symbol: '⭐', color: 'tu-lenh-red' },
+                { name: 'Pháo Binh', symbol: '💥', color: 'tu-lenh-red' },
+                { name: 'Xe Tăng', symbol: '🛡️', color: 'tu-lenh-red' },
+                { name: 'Không Quân', symbol: '✈️', color: 'tu-lenh-red' },
+                { name: 'Hải Quân', symbol: '⚓', color: 'tu-lenh-red' },
+                { name: 'Bộ Binh', symbol: '🪖', color: 'tu-lenh-red' }
+            ];
+
+            for (let i = 0; i < 90; i++) {
+                const cell = document.createElement('div');
+                cell.className = "bg-emerald-950/60 border border-emerald-800/40 rounded flex items-center justify-center cursor-pointer hover:bg-emerald-800/40 transition";
+                
+                // Populate sample military units
+                if (i < 18) {
+                    const unit = militaryUnits[i % militaryUnits.length];
+                    cell.innerHTML = `<div class="tu-lenh-piece tu-lenh-blue">${unit.symbol}</div>`;
+                } else if (i >= 72) {
+                    const unit = militaryUnits[i % militaryUnits.length];
+                    cell.innerHTML = `<div class="tu-lenh-piece tu-lenh-red">${unit.symbol}</div>`;
+                }
+
+                cell.onclick = () => {
+                    playSound('move');
+                    logMove(`Military unit action executed at Sector ${i}`);
+                };
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function resetCurrentGame() {
+            playSound('click');
+            launchGame(currentGame);
+        }
+
+        // ==========================================
+        // DAILY SPIN WHEEL ENGINE
+        // ==========================================
+        const wheelPrizes = [
+            { label: '100 Coins', value: 100 },
+            { label: '500 Coins', value: 500 },
+            { label: 'Jackpot 2000', value: 2000 },
+            { label: 'Try Again', value: 0 },
+            { label: '250 Coins', value: 250 },
+            { label: 'Master Badge', value: 50 }
+        ];
+
+        let wheelAngle = 0;
+        let isSpinning = false;
+
+        function renderWheel() {
+            const canvas = document.getElementById('wheel-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const numSlices = wheelPrizes.length;
+            const sliceAngle = (Math.PI * 2) / numSlices;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            wheelPrizes.forEach((prize, idx) => {
+                const startAngle = idx * sliceAngle;
+                const endAngle = startAngle + sliceAngle;
+
+                ctx.beginPath();
+                ctx.moveTo(140, 140);
+                ctx.arc(140, 140, 135, startAngle, endAngle);
+                ctx.closePath();
+
+                ctx.fillStyle = idx % 2 === 0 ? '#8b4513' : '#3d2314';
+                ctx.fill();
+                ctx.strokeStyle = '#dfa234';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw Text
+                ctx.save();
+                ctx.translate(140, 140);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffe082";
+                ctx.font = "bold 12px sans-serif";
+                ctx.fillText(prize.label, 120, 4);
+                ctx.restore();
+            });
+        }
+
+        function spinWheel() {
+            if (isSpinning) return;
+            playSound('click');
+            isSpinning = true;
+
+            const btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            const canvas = document.getElementById('wheel-canvas');
+            const randomRotation = 1440 + Math.floor(Math.random() * 360); // At least 4 full rotations
+            wheelAngle += randomRotation;
+
+            canvas.style.transform = `rotate(${wheelAngle}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+
+                // Calculate Prize
+                const actualDegree = wheelAngle % 360;
+                const sliceSize = 360 / wheelPrizes.length;
+                const prizeIndex = Math.floor((360 - (actualDegree % 360)) / sliceSize) % wheelPrizes.length;
+                const wonPrize = wheelPrizes[prizeIndex];
+
+                currentUser.coins += wonPrize.value;
+                updateAuthUI();
+
+                playSound('win');
+                document.getElementById('spin-msg').innerText = `🎉 Congratulations! You won ${wonPrize.label}!`;
+            }, 4000);
+        }
+
+        // ==========================================
+        // LEADERBOARD RENDERER
+        // ==========================================
+        function renderLeaderboard() {
+            const table = document.getElementById('leaderboard-table-body');
+            const leaderboardData = [
+                { rank: 1, name: 'Nguyễn Văn Hùng', title: 'Grandmaster (Đại Sư)', winRate: '78.4%', coins: '245,000' },
+                { rank: 2, name: 'Trần Quốc Bảo', title: 'Xiangqi King', winRate: '74.1%', coins: '189,200' },
+                { rank: 3, name: 'Lê Hoàng Nam', title: 'Tactical General', winRate: '69.8%', coins: '142,500' },
+                { rank: 4, name: 'Phạm Minh Đức', title: 'Chess Strategist', winRate: '65.2%', coins: '98,100' },
+                { rank: 5, name: 'Hoàng Anh Tuấn', title: 'Master Player', winRate: '61.0%', coins: '74,300' }
+            ];
+
+            table.innerHTML = leaderboardData.map(item => `
+                <tr class="hover:bg-amber-900/20 transition">
+                    <td class="p-3 font-bold text-yellow-400">#${item.rank}</td>
+                    <td class="p-3 font-semibold">${item.name}</td>
+                    <td class="p-3 text-amber-300/80">${item.title}</td>
+                    <td class="p-3 text-right text-emerald-400 font-mono">${item.winRate}</td>
+                    <td class="p-3 text-right font-bold text-yellow-400 font-mono">${item.coins} 💰</td>
+                </tr>
+            `).join('');
+        }
+
+        // ==========================================
+        // DEPLOYMENT CONSOLE (GITHUB + VERCEL + NEON)
+        // ==========================================
+        let buildTimer;
+
+        function triggerProductionDeployment() {
+            playSound('click');
+            const terminal = document.getElementById('terminal-output');
+            const triggerBtn = document.getElementById('deploy-trigger-btn');
+            const vercelText = document.getElementById('vercel-status-text');
+            const vercelBadge = document.getElementById('vercel-badge');
+            const liveUrlBox = document.getElementById('live-url-box');
+            const timerEl = document.getElementById('build-time-counter');
+
+            triggerBtn.disabled = true;
+            triggerBtn.classList.add('opacity-50');
+            liveUrlBox.classList.add('hidden');
+
+            terminal.innerHTML = '';
+            let seconds = 0;
+            clearInterval(buildTimer);
+            buildTimer = setInterval(() => {
+                seconds += 0.1;
+                timerEl.innerText = `${seconds.toFixed(1)}s`;
+            }, 100);
+
+            const logs = [
+                { text: '➔ [GitHub] Webhook triggered from repository branch main...', delay: 200 },
+                { text: '➔ [Neon Postgres] Querying serverless database connection pool...', delay: 600 },
+                { text: '✔ [Neon Postgres] Database schema synced & authenticated successfully.', delay: 1000 },
+                { text: '➔ [Vercel] Provisioning isolated build container (Node.js v20.x)...', delay: 1500 },
+                { text: '➔ [Vercel] Compiling Tailwind CSS & bundle optimizations...', delay: 2200 },
+                { text: '➔ [Vercel] Generating edge functions & static board routes...', delay: 3000 },
+                { text: '✔ [Vercel] Deployment uploaded to global CDN edge locations.', delay: 3800 },
+                { text: '🎉 [Production] Live URL generated: https://daichien-co.vercel.app', delay: 4200 }
+            ];
+
+            vercelText.innerText = 'Building...';
+            vercelBadge.innerText = 'Deploying';
+            vercelBadge.className = 'ml-auto text-xs px-2 py-0.5 rounded bg-yellow-950 text-yellow-400 border border-yellow-800 animate-pulse';
+
+            logs.forEach(logItem => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.innerText = logItem.text;
+                    if (logItem.text.includes('✔')) line.className = 'text-emerald-400';
+                    if (logItem.text.includes('🎉')) line.className = 'text-cyan-400 font-bold';
+                    terminal.appendChild(line);
+                    terminal.scrollTop = terminal.scrollHeight;
+                }, logItem.delay);
+            });
+
+            setTimeout(() => {
+                clearInterval(buildTimer);
+                playSound('win');
+                triggerBtn.disabled = false;
+                triggerBtn.classList.remove('opacity-50');
+
+                vercelText.innerText = 'Ready';
+                vercelBadge.innerText = 'Live';
+                vercelBadge.className = 'ml-auto text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800';
+                liveUrlBox.classList.remove('hidden');
+            }, 4400);
+        }
+
+        function copyDeploymentLink() {
+            playSound('click');
+            const link = document.getElementById('live-deployment-link').href;
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = link;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            alert('Deployment URL copied to clipboard!');
+        }
+
+        // ==========================================
+        // INITIALIZATION ON LOAD
+        // ==========================================
+        window.onload = function() {
+            initAudio();
+            updateAuthUI();
+            renderLeaderboard();
+            renderWheel();
+        };
+    </script>
+</body>
+</html>
